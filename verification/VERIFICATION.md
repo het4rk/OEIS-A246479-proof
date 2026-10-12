@@ -3,7 +3,7 @@
 | Item | Value |
 |---|---|
 | Date | 2026-10-12 |
-| Verified commit | `4101d25a1ad57721396465aa97ba9d2ac86cc0b0` |
+| Verified commit | `4aa3998c123c4fcb5674c801d2f25c9c19203466` |
 | Lean toolchain | `leanprover/lean4:v4.35.0-rc4` |
 | Mathlib | `v4.35.0-rc4`, commit `1f414401f69059aa7eead47b53ee40bd38455eeb` |
 | Build result | `Build completed successfully` (see [`build-log.txt`](build-log.txt)) |
@@ -15,7 +15,7 @@
 ```bash
 git clone https://github.com/het4rk/OEIS-A246479-proof
 cd OEIS-A246479-proof
-git checkout 4101d25a1ad57721396465aa97ba9d2ac86cc0b0
+git checkout 4aa3998c123c4fcb5674c801d2f25c9c19203466
 cd A246479
 lake exe cache get
 lake build
@@ -27,7 +27,7 @@ grep -rnw sorry A246479 --include=*.lean   # expect no output
 
 `grep -rnw sorry A246479/A246479 --include=*.lean` gave no matches, and the build log has no `declaration uses 'sorry'` warnings. No `native_decide` is used.
 
-Fresh clone of that commit: `lake build` (success, Mathlib packages pinned by `lake-manifest.json`), `lake env lean Axioms.lean` checked by `scripts/check_axioms.sh` (OK, 21 declarations).
+Fresh clone of that commit: `lake exe cache get`, `lake build` (success), `lake env lean Axioms.lean` checked by `scripts/check_axioms.sh` (OK, 21 declarations).
 
 ## b-file check
 

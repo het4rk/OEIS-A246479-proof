@@ -1,6 +1,6 @@
-⚠ [9020/9028] Built A246479.Basic (280s)
+⚠ [9020/9028] Built A246479.Basic (160s)
 warning: A246479/Basic.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
-⚠ [9021/9028] Built A246479.Types (7.9s)
+⚠ [9021/9028] Built A246479.Types (43s)
 warning: A246479/Types.lean:118:29: This simp argument is unused:
   hx
 
@@ -195,7 +195,7 @@ Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus fa
 warning: A246479/Types.lean:166:19: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
 
 Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
-⚠ [9022/9028] Built A246479.Step (6.6s)
+⚠ [9022/9028] Built A246479.Step (162s)
 warning: A246479/Step.lean:36:26: This simp argument is unused:
   h2
 
@@ -826,7 +826,7 @@ Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
 warning: A246479/Step.lean:184:32: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
 
 Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
-⚠ [9023/9028] Built A246479.Forms (48s)
+⚠ [9023/9028] Built A246479.Forms (124s)
 warning: A246479/Forms.lean:297:6: The declaration 'G1__base' contains '__', which does not follow the mathlib naming conventions. Consider using single underscores instead.
 
 Note: This linter can be disabled with `set_option linter.style.nameCheck false`
@@ -890,8 +890,8 @@ Note: This linter can be disabled with `set_option linter.style.nameCheck false`
 warning: A246479/Forms.lean:566:6: The declaration 'G4__chain8' contains '__', which does not follow the mathlib naming conventions. Consider using single underscores instead.
 
 Note: This linter can be disabled with `set_option linter.style.nameCheck false`
-✔ [9024/9028] Built A246479.Main (107s)
-✔ [9025/9028] Built A246479.Rows (6.9s)
-✔ [9026/9028] Built A246479.Values (7.1s)
-✔ [9027/9028] Built A246479 (6.7s)
+✔ [9024/9028] Built A246479.Main (75s)
+✔ [9025/9028] Built A246479.Rows (40s)
+✔ [9026/9028] Built A246479.Values (68s)
+✔ [9027/9028] Built A246479 (58s)
 Build completed successfully (9028 jobs).
