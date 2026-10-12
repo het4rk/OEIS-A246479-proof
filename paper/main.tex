@@ -1,0 +1,147 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,tabularx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{array}
+\def\UrlBreaks{\do0\do1\do2\do3\do4\do5\do6\do7\do8\do9\do a\do b\do c\do d\do e\do f\do/\do.\do-}
+\emergencystretch=3em
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{remark}\newtheorem{remark}[theorem]{Remark}
+\newcommand{\lean}[1]{{\ttfamily\def\_{\textunderscore\allowbreak}\def\/{/\allowbreak}#1}}
+\author{Hetark Shah, AI-assisted by Grok}
+\date{October 12, 2026}
+\title{A proof of the conjectured column recurrences for OEIS A246479, formalized in Lean~4}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Let $T(n,k)$ be the number of arrays of length $n+3$ over $\{0,\dots,k\}$ in which no two entries among any four consecutive terms sum to exactly $k$ (OEIS A246479~\cite{oeis}). R.~H.~Hardin recorded column recurrences for $k\le 9$ as ``Empirical'', and Robert Israel (2024) conjectured two recurrences valid for all $k$: an order-$4$ recurrence for odd $k\ge5$ and an order-$10$ recurrence for even $k\ge6$. We prove both conjectures, in fact for every odd and every even $k$, together with Hardin's column formulas for $k=1,\dots,9$ and Colin Barker's conjectured closed forms for rows $1$, $2$ and $3$ (A246480--A246482). The proof is a transfer-matrix argument on eleven ``types'' of triples, uniform in $k$, and is machine-checked in Lean~4 with Mathlib~\cite{mathlib}: no \texttt{sorry}, no \texttt{native\_decide}, and only the axioms \texttt{propext}, \texttt{Classical.choice} and \texttt{Quot.sound}.
+\end{abstract}
+
+\section{Introduction}
+OEIS A246479 (R.~H.~Hardin, 2014) tabulates $T(n,k)$, the number of words $w_1\cdots w_{n+3}$ over $\{0,\dots,k\}$ with $w_i+w_j\ne k$ whenever $1\le j-i\le 3$. The entry lists, as ``Empirical for column $k$'' (with $a(n)=T(n,k)$),
+\begin{align*}
+k=1&: a(n)=a(n-1),\qquad k=2: a(n)=a(n-1)+a(n-4),\\ k=3&: a(n)=2a(n-1)+a(n-3),\\
+k=4&: a(n)=2a(n-1)+a(n-3)+14a(n-4)+3a(n-5)+6a(n-6)+a(n-8)+a(n-9),\\
+k&=5,7,9: a(n)=(k-2)a(n-1)+2a(n-2)+(k-2)a(n-3)+a(n-4),
+\end{align*}
+and ``order 10'' for $k=6,8$ (the $k=6$ recurrence is written out in A246477). In November 2024 Robert Israel added to the entry:
+\begin{quote}
+It appears that for $k\ge5$ odd, $a(n)=(k-2)a(n-1)+2a(n-2)+(k-2)a(n-3)+a(n-4)$, and that for $k\ge6$ even,
+$a(n)=(k-3)a(n-1)+2a(n-2)+(k-3)a(n-3)+(k^3-6k^2+15k-13)a(n-4)+(3k^2-11k+13)a(n-5)+(k^3-7k^2+19k-19)a(n-6)+(k^2-4k+6)a(n-7)+a(n-8)+(k-2)a(n-9)+a(n-10)$.
+\end{quote}
+We prove both statements for all $k$ of the given parity, and all of Hardin's column formulas.
+
+\section{Related work}
+The table and its column and row recurrences were contributed by Hardin in 2014~\cite{oeis}; Israel's two conjectures and a Maple program computing columns by a transfer matrix on all valid triples were added in 2024~\cite{oeis}. Columns $k=2,\dots,7$ are the entries A246473--A246478, where Colin Barker (2018) added empirical generating functions; rows $1$--$3$ are A246480--A246482, where Barker conjectured quasi-polynomial closed forms~\cite{oeisrel}. That each column satisfies \emph{some} linear recurrence is immediate from the transfer-matrix method (Stanley~\cite{stanley}, \S4.7); the content of Israel's conjecture is the explicit, uniform-in-$k$ recurrences, whose order does not grow with $k$ although the naive transfer matrix has $\Theta(k^3)$ states. To our knowledge no proof had been published: the OEIS entries mark all these formulas as empirical or conjectural, and an OEIS and web search on October 12, 2026 found none. The method is a direct extension of the four-type argument we used for the three-term analogue A245995~\cite{a245995}; what is new here is the eleven-type reduction for windows of four, the resulting proofs of Israel's and Barker's conjectures, and the machine-checked formalization in Lean~4~\cite{lean4} and Mathlib~\cite{mathlib}.
+
+\section{Statement}
+\begin{theorem}\label{thm:main}
+For all $n\ge0$ (here $T(0,k)$ counts words of length $3$), over the integers:
+\begin{enumerate}
+\item if $k$ is odd, $T(n+4,k)=(k-2)T(n+3,k)+2T(n+2,k)+(k-2)T(n+1,k)+T(n,k)$;
+\item if $k$ is even,
+\begin{multline*}
+T(n+10,k)=(k-3)T(n+9,k)+2T(n+8,k)+(k-3)T(n+7,k)\\+(k^3-6k^2+15k-13)T(n+6,k)
++(3k^2-11k+13)T(n+5,k)+(k^3-7k^2+19k-19)T(n+4,k)\\+(k^2-4k+6)T(n+3,k)
++T(n+2,k)+(k-2)T(n+1,k)+T(n,k).
+\end{multline*}
+\end{enumerate}
+\end{theorem}
+\begin{corollary}\label{cor:cols}
+Israel's two conjectures hold, and all of Hardin's column recurrences for $k=1,\dots,9$ hold (OEIS offset $n\ge1$, wherever the right side is defined).
+\end{corollary}
+\begin{theorem}\label{thm:rows}
+For even $k$: $T(1,k)=k^4-2k^3+3k^2-k$, $T(2,k)=k^5-4k^4+10k^3-11k^2+5k$, $T(3,k)=k^6-6k^5+21k^4-40k^3+43k^2-20k$. For odd $k$: $T(1,k)=k^4-2k^3+3k^2+3k-3$, $T(2,k)=k^5-4k^4+10k^3-4k^2-10k+9$, $T(3,k)=k^6-6k^5+21k^4-30k^3+5k^2+37k-26$. These are Barker's conjectured formulas for A246480, A246481, A246482.
+\end{theorem}
+
+\section{Proof}
+Write $\bar a=k-a$; a pair at distance at most $3$ is forbidden iff its letters are $a,\bar a$. Let $\varepsilon=1$ if $k$ is even and $0$ otherwise; for even $k$, $h=k/2$ is the unique letter with $\bar h=h$ (the ``middle'' letter). Let $N_L(x,y,z)$ be the number of good words of length $L+3$ beginning $x,y,z$.
+
+\textbf{Step 1 (prepending a letter).} A word $c\,v$ is good iff $v$ is good and $c+v_i\ne k$ for $i=1,2,3$. Hence
+\[N_{L+1}(c,x,y)=[\,x\ne\bar c,\ y\ne\bar c\,]\Bigl(\sum_a N_L(x,y,a)-N_L(x,y,\bar c)\Bigr).\]
+
+\textbf{Step 2 (eleven types).} A triple is \emph{valid} if no two of its letters are complementary; in a valid triple the middle letter occurs at most once, and equal letters are non-middle. Classify a valid triple $(x,y,z)$ by its equality pattern and the position of a middle letter:
+$A$: $x=y=z$; $B$, $B_m$: $x=y\ne z$ with $z$ non-middle, resp.\ middle; $C$, $C_m$: $x=z\ne y$ with $y$ non-middle, resp.\ middle; $D$, $D_m$: $y=z\ne x$ with $x$ non-middle, resp.\ middle; $E$: all distinct and non-middle; $E_1,E_2,E_3$: all distinct with the middle letter in position $1,2,3$. We claim $N_L(x,y,z)$ is a function $\tau_L$ of the type ($0$ if invalid), with $\tau_0\equiv1$.
+
+\emph{Pair sums.} Fix a non-forbidden pair $(x,y)$ and sum $\tau_L(x,y,a)$ over $a$. The letters $a\in\{\bar x,\bar y\}$ contribute $0$; $a=x$, $a=y$ and $a=h$ contribute single type values; all other letters give the same type. This yields, with $\kappa=k-1-\varepsilon$,
+\begin{align*}
+S_{xx}&=A+\varepsilon B_m+\kappa B &&(x=y),\\
+S_{\neq}&=C+D+\varepsilon E_3+(\kappa-2)E &&(x\ne y,\ \text{both non-middle}),\\
+S_{h\cdot}&=D_m+\kappa E_1 &&(x=h),\qquad S_{\cdot h}=C_m+\kappa E_2\quad(y=h).
+\end{align*}
+\emph{Correction term.} By Step~1, $N_{L+1}(c,x,y)$ is the pair sum of $(x,y)$ minus $N_L(x,y,\bar c)$, and the type of $(x,y,\bar c)$ is determined by the type of $(c,x,y)$. Checking the eleven cases gives the linear step
+\begin{align*}
+A'&=S_{xx}, & B'&=C'=S_{\neq}, & B_m'&=S_{\cdot h}, & C_m'&=S_{h\cdot},\\
+D'&=S_{xx}-B, & D_m'&=S_{xx}-B_m, & E'&=S_{\neq}-E, & E_1'&=S_{\neq}-E_3,\\
+E_2'&=S_{h\cdot}-E_1, & E_3'&=S_{\cdot h}-E_2.
+\end{align*}
+For example, if $(c,x,y)$ has type $E_2$ ($x=h$) then $\bar c$ is a non-middle letter different from $x,y,\bar x,\bar y$, so $(x,y,\bar c)$ has type $E_1$ and $N_{L+1}(c,x,y)=S_{h\cdot}-E_1$.
+
+\textbf{Step 3 (total).} Summing over $y$ and then $x$ by the same counting,
+\[T(L,k)=\varepsilon(k+1-\varepsilon)S_{h\cdot}+(k+1-\varepsilon)\bigl(S_{xx}+\varepsilon S_{\cdot h}+\kappa S_{\neq}\bigr).\]
+
+\textbf{Step 4 (recurrences).} The type vector evolves by a fixed linear map $M$ whose entries are polynomials in $k$, and $T(L,k)=F(M^L\mathbf 1)$ for a fixed linear functional $F$. Theorem~\ref{thm:main} is the statement that $F\circ P(M)=0$ for the corresponding characteristic polynomial $P$. For odd $k$ ($\varepsilon=0$) only $A,B,C,D,E$ enter, and the rows for $B$ and $C$ coincide, which is why the order drops to $4$. We write $F\circ M^i$ as explicit linear forms $G_i$ with polynomial coefficients, check $G_i\circ M=G_{i+1}$ for each $i$, and then check $G_4=(k-2)G_3+2G_2+(k-2)G_1+G_0$ (odd) and the analogous identity for $G_{10}$ (even). All of these are polynomial identities, verified in Lean by \texttt{ring}. Hardin's formulas for $k=1,\dots,4$ are checked the same way with $k$ fixed; those for $k=5,\dots,9$ are specialisations of Theorem~\ref{thm:main}. Theorem~\ref{thm:rows} is the evaluation of $G_1,G_2,G_3$ at $\mathbf 1$.
+
+\textbf{Numerical check.} The recursion reproduces all $9999$ terms of Hardin's b-file for A246479 (antidiagonals up to $k=140$).
+
+\begin{remark}
+Theorem~\ref{thm:main} holds for every $k$ of the given parity, including $k=1,3$ and $k=2,4$, as an identity over $\mathbb Z$. For $k=6$ the coefficient $k^3-7k^2+19k-19=11$ is positive, but read in natural-number arithmetic with truncated subtraction the expression would be wrong, which is why we state the even case over $\mathbb Z$.
+\end{remark}
+
+\section{Formalization}
+All declarations are in namespace \lean{A246479}; see Table~\ref{tab:lean}.
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Lean name (file) & Statement \\
+\midrule
+\lean{Good}, \lean{T}, \lean{N} (\lean{Basic.lean}) & OEIS condition (natural-number sums); $T(n,k)$; $N_L(x,y,z)$ \\
+\lean{good\_cons}, \lean{N\_succ} & Step~1 \\
+\lean{typ}, \lean{sum\_spec}, \lean{pair\_sum} (\lean{Types.lean}) & types and pair sums \\
+\lean{step}, \lean{typ\_step}, \lean{N\_eq\_typ}, \lean{T\_eq\_F} (\lean{Step.lean}) & Steps~2--3 \\
+\lean{Go0}--\lean{Go4}, \lean{Ge0}--\lean{Ge10}, chain lemmas (\lean{Forms.lean}) & Step~4 \\
+\lean{T\_odd\_int}, \lean{T\_even\_int}, \lean{T\_odd} (\lean{Main.lean}) & Theorem~\ref{thm:main} \\
+\lean{israel\_odd}, \lean{israel\_even}, \lean{T\_col1}--\lean{T\_col9} & Corollary~\ref{cor:cols}, verbatim OEIS form \\
+\lean{row1\_even}, \dots, \lean{row3\_odd} (\lean{Rows.lean}) & Theorem~\ref{thm:rows} \\
+\lean{Values.lean} & kernel-checked values $T(1,1)=2$, $T(1,2)=10$, $T(2,2)=14$, $T(1,3)=60$ \\
+\bottomrule
+\end{tabularx}
+\caption{Theorems and their Lean names.}\label{tab:lean}
+\end{table}
+
+\section{Reproducibility}
+\begin{itemize}
+\item Source code: \url{https://github.com/het4rk/OEIS-A246479-proof}. The Lean project is in \texttt{A246479/}.
+\item Toolchain: \texttt{leanprover/lean4:v4.35.0-rc4}. Mathlib: tag \texttt{v4.35.0-rc4}, commit \nolinkurl{1f414401f69059aa7eead47b53ee40bd38455eeb}, pinned in \texttt{lake-manifest.json}.
+\item Build:
+\begin{verbatim}
+cd A246479
+lake exe cache get
+lake build
+lake env lean Axioms.lean
+\end{verbatim}
+\item Axioms: all $21$ theorems listed in \texttt{Axioms.lean} depend only on \texttt{propext}, \texttt{Classical.choice} and \texttt{Quot.sound}.
+\item Attestation: \texttt{verification/} contains the build log, the axiom output and \texttt{VERIFICATION.md} with SHA-256 hashes of the Lean sources. Continuous integration rebuilds on every push, rejects \texttt{sorry} and non-standard axioms, and uploads the logs as artifacts. \texttt{scripts/check\_bfile.py} re-checks the b-file.
+\end{itemize}
+
+\section{Limitations}
+The argument is a transfer-matrix computation; its interest is that it settles Israel's uniform-in-$k$ conjectures and a family of empirical OEIS formulas with a machine-checked proof. We do not prove that the recurrences have minimal order for every $k$. We do not formalize Hardin's row recurrences for $n\ge4$ or Barker's column generating functions, although the latter follow from the recurrences and the initial terms, and each row is a quasi-polynomial in $k$ by the same method. Windows of length five (A246737) and longer are not treated.
+
+\begin{thebibliography}{9}
+\bibitem{oeis} R.~H.~Hardin, R.~Israel, \emph{A246479: $T(n,k)$ = number of length $n+3$ $0..k$ arrays with no pair in any consecutive four terms totalling exactly $k$}, The On-Line Encyclopedia of Integer Sequences, 2014 (comments 2024), \url{https://oeis.org/A246479}.
+\bibitem{oeisrel} R.~H.~Hardin, C.~Barker, \emph{A246473--A246478} (columns $k=2,\dots,7$) and \emph{A246480--A246482} (rows $1$--$3$) of A246479, The On-Line Encyclopedia of Integer Sequences, \url{https://oeis.org/A246480}.
+\bibitem{a245995} H.~Shah (AI-assisted by Grok), \emph{A proof of Hardin's empirical column recurrences for OEIS A245995, formalized in Lean~4}, 2026, \url{https://github.com/het4rk/OEIS-A245995-proof}.
+\bibitem{stanley} R.~P.~Stanley, \emph{Enumerative Combinatorics, Vol.~1}, 2nd ed., Cambridge University Press, 2012.
+\bibitem{mathlib} The mathlib Community, \emph{The Lean mathematical library}, in Proc.\ CPP 2020, ACM, 367--381.
+\bibitem{lean4} L.~de Moura, S.~Ullrich, \emph{The Lean 4 theorem prover and programming language}, in CADE-28, LNCS 12699, Springer, 2021, 625--635.
+\end{thebibliography}
+\end{document}
